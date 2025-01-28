@@ -10,6 +10,7 @@ type OT114K_DATA struct {
 }
 
 type OT_PROCESSED_01_LINE struct {
+	PrefixID  int    `json:"prefix_id"`
 	Question  string `json:"question"`
 	Reasoning string `json:"reasoning"`
 	Response  string `json:"response"`
