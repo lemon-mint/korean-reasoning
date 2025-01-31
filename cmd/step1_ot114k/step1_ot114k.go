@@ -84,6 +84,7 @@ func main() {
 var prefixes = []string{
 	"Generate an executable Python function generated from the given prompt. The function should take stdin as input and print the output. Simply call the function after the definition.",
 	"Return your final response within \\boxed{}. ",
+	"Generate an executable Python function generated from the given prompt. Return the function body without invoking it at the final solution.",
 }
 
 func process_line(in *types.OT114K_LINE) (ok bool, out *types.OT_PROCESSED_01_LINE) {
@@ -113,7 +114,7 @@ func process_line(in *types.OT114K_LINE) (ok bool, out *types.OT_PROCESSED_01_LI
 			}
 		}
 
-		// 3. remove quotes
+		// 3. remove quotes (pre)
 		if !removed && strings.HasPrefix(question, "\"") {
 			if !strings.HasSuffix(question, "\"") {
 				fmt.Println("Fail 31")
@@ -159,6 +160,28 @@ func process_line(in *types.OT114K_LINE) (ok bool, out *types.OT_PROCESSED_01_LI
 
 		reasoning = strings.TrimSpace(reasoning)
 		response = strings.TrimSpace(response)
+
+		// 6. remove quotes (post)
+
+		if strings.HasPrefix(reasoning, "\"") {
+			if !strings.HasSuffix(reasoning, "\"") {
+				fmt.Println("Fail 61")
+				return false, nil
+			}
+
+			reasoning = strings.TrimPrefix(reasoning, "\"")
+			reasoning = strings.TrimSuffix(reasoning, "\"")
+		}
+
+		if strings.HasPrefix(response, "\"") {
+			if !strings.HasSuffix(response, "\"") {
+				fmt.Println("Fail 62")
+				return false, nil
+			}
+
+			response = strings.TrimPrefix(response, "\"")
+			response = strings.TrimSuffix(response, "\"")
+		}
 
 		return true, &types.OT_PROCESSED_01_LINE{
 			PrefixID:  prefix_id,
