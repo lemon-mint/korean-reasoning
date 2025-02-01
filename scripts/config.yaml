@@ -1,0 +1,31 @@
+base_model: sh2orc/Llama-3.1-Korean-8B-Instruct
+
+hub_model_id: lemon-mint/LLaMa-3.1-Korean-Reasoning-8B-Instruct
+hub_strategy: every_save
+
+datasets:
+  - path: lemon-mint/korean-reasoning-v02
+    type: chat_template
+dataset_prepared_path: last_run_prepared
+val_set_size: 0.1
+output_dir: ./outputs/LLaMa-3.1-Korean-Reasoning-8B-Instruct
+
+bf16: true
+tf32: true
+
+sequence_len: 8192
+sample_packing: true
+
+# If greater than 1, backpropagation will be skipped and the gradients will be accumulated for the given number of steps.
+gradient_accumulation_steps: 4
+# The number of samples to include in each batch. This is the number of samples sent to each GPU.
+# Batch size per gpu = micro_batch_size * gradient_accumulation_steps
+micro_batch_size: 2
+eval_batch_size:
+num_epochs: 2
+warmup_ratio: 0.05  # cannot use with warmup_steps
+learning_rate: 0.00005
+
+save_safetensors: true
+
+optimizer: adalomo
