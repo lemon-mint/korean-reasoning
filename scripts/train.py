@@ -1,15 +1,19 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
-AutoLigerKernelForCausalLM
-from trl import SFTTrainer
-from cut_cross_entropy.transformers import cce_patch
+#from liger_kernel.transformers import AutoLigerKernelForCausalLM
+#from cut_cross_entropy.transformers import cce_patch
+from trl import SFTTrainer, SFTConfig
+import torch
 
 BASE_MODEL = "sh2orc/Llama-3.1-Korean-8B-Instruct"
-TOKENIZER_MODEL = "unsloth/Meta-Llama-3.1-8B-Instruct"
+TOKENIZER_MODEL = "sh2orc/Llama-3.1-Korean-8B-Instruct"
 
 print("Loading the base model")
-model = AutoModelForCausalLM.from_pretrained(BASE_MODEL)
-model = cce_patch(model, reduction="none")
-
+model = AutoModelForCausalLM.from_pretrained(
+    BASE_MODEL,
+    torch_dtype=torch.bfloat16,
+    attn_implementation="flash_attention_2",
+)
+#model = cce_patch(model)
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
 
 def formatting_prompts_func(examples):
@@ -23,8 +27,46 @@ from datasets import load_dataset
 dataset = load_dataset("lemon-mint/korean-reasoning-v02", split = "train")
 dataset = dataset.map(formatting_prompts_func, batched = True,)
 
-training_args = TrainingArguments(
-    output_dir="output",
-    per_device_train_batch_size=8,
+output_dir = "outputs"
+max_seq_length = 16384
 
+training_args = SFTConfig(
+    num_train_epochs=2,
+    max_seq_length = max_seq_length,
+    packing = True, # Can make training 5x faster for short sequences.
+
+    per_device_train_batch_size=8,
+    #gradient_accumulation_steps=4,
+    gradient_checkpointing=True,
+
+    learning_rate = 2e-4,
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.05,
+
+    bf16=True,
+
+    use_liger_kernel=True,
+    use_liger=True,
+
+    weight_decay=0.01,
+    optim="adalomo",
+
+    report_to="wandb",
+    output_dir=output_dir,
+    hub_model_id="lemon-mint/LLaMa-3.1-Korean-Reasoning-8B-Instruct",
+    hub_strategy="checkpoint",
+    save_steps=100,
+    save_total_limit=1,
+    logging_steps=1,
 )
+
+trainer = SFTTrainer(
+    model = model,
+    processing_class=tokenizer,
+    train_dataset = dataset,
+    args = training_args,
+)
+
+print("do train")
+trainer.train()
+print("end train")
