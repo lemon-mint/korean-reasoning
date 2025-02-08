@@ -4,8 +4,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import SFTTrainer, SFTConfig
 import torch
 
-BASE_MODEL = "sh2orc/Llama-3.1-Korean-8B-Instruct"
-TOKENIZER_MODEL = "sh2orc/Llama-3.1-Korean-8B-Instruct"
+BASE_MODEL = "exp-models/phi-4-pruned"
+TOKENIZER_MODEL = "exp-models/phi-4-pruned"
+OUTPUT_MODEL = "exp-models/phi-4-ko-reasoning-v1"
+DATASET = "exp-models/korean-reasoning-mixture-20250203-preview"
 
 print("Loading the base model")
 model = AutoModelForCausalLM.from_pretrained(
@@ -24,22 +26,23 @@ pass
 
 print("Loading the dataset")
 from datasets import load_dataset
-dataset = load_dataset("lemon-mint/korean-reasoning-v02", split = "train")
+dataset = load_dataset(DATASET, split = "train")
 dataset = dataset.map(formatting_prompts_func, batched = True,)
 
 output_dir = "outputs"
-max_seq_length = 16384
+max_seq_length = 8192
 
 training_args = SFTConfig(
     num_train_epochs=2,
+    #max_steps=5,
     max_seq_length = max_seq_length,
     packing = True, # Can make training 5x faster for short sequences.
 
     per_device_train_batch_size=8,
-    #gradient_accumulation_steps=4,
+    #gradient_accumulation_steps=1,
     gradient_checkpointing=True,
 
-    learning_rate = 2e-4,
+    learning_rate = 6e-5,
     lr_scheduler_type="cosine",
     warmup_ratio=0.05,
 
@@ -53,9 +56,10 @@ training_args = SFTConfig(
 
     report_to="wandb",
     output_dir=output_dir,
-    hub_model_id="lemon-mint/LLaMa-3.1-Korean-Reasoning-8B-Instruct",
+    push_to_hub=True,
+    hub_model_id=OUTPUT_MODEL,
     hub_strategy="checkpoint",
-    save_steps=100,
+    save_steps=500,
     save_total_limit=1,
     logging_steps=1,
 )
@@ -70,3 +74,9 @@ trainer = SFTTrainer(
 print("do train")
 trainer.train()
 print("end train")
+
+model.push_to_hub(OUTPUT_MODEL+"-iter1")
+tokenizer.push_to_hub(OUTPUT_MODEL+"-iter1")
+
+model.save_pretrained(OUTPUT_MODEL+"-iter1")
+tokenizer.save_pretrained(OUTPUT_MODEL+"-iter1")
