@@ -11,6 +11,6 @@ pip install transformers liger-kernel torch wandb bitsandbytes accelerate peft t
 pip install flash-attn --no-build-isolation
 #pip install "cut-cross-entropy[transformers] @ git+https://github.com/apple/ml-cross-entropy.git"
 export HF_HUB_ENABLE_HF_TRANSFER=1
-export WANDB_PROJECT=phi-4-ko-reasoning-v1
+export WANDB_PROJECT=gemma-2-ko-reasoning-v1
 
 huggingface-cli login --token $HF_TOKEN

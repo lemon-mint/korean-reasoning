@@ -4,9 +4,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import SFTTrainer, SFTConfig
 import torch
 
-BASE_MODEL = "exp-models/phi-4-pruned"
-TOKENIZER_MODEL = "exp-models/phi-4-pruned"
-OUTPUT_MODEL = "exp-models/phi-4-ko-reasoning-v1"
+BASE_MODEL = "google/gemma-2-9b-it"
+TOKENIZER_MODEL = "google/gemma-2-9b-it"
+OUTPUT_MODEL = "exp-models/gemma-2-ko-reasoning-v1"
 DATASET = "exp-models/korean-reasoning-mixture-20250203-preview"
 
 print("Loading the base model")
@@ -42,7 +42,7 @@ training_args = SFTConfig(
     #gradient_accumulation_steps=1,
     gradient_checkpointing=True,
 
-    learning_rate = 6e-5,
+    learning_rate = 4e-5,
     lr_scheduler_type="cosine",
     warmup_ratio=0.05,
 
@@ -59,7 +59,7 @@ training_args = SFTConfig(
     push_to_hub=True,
     hub_model_id=OUTPUT_MODEL,
     hub_strategy="checkpoint",
-    save_steps=500,
+    save_steps=300,
     save_total_limit=1,
     logging_steps=1,
 )
